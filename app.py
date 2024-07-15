@@ -25,6 +25,8 @@ from email.message import EmailMessage
 import psutil
 import threading
 
+os.environ['DISPLAY'] = ':0'
+
 # Load YAML file
 def load_scripts_from_yaml(yaml_file):
     with open(yaml_file, 'r') as stream:
