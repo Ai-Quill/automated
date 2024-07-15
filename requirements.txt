@@ -10,7 +10,6 @@ rembg
 Pillow
 faker
 lmproof
-smtplib
 psutil
 simple_image_download
 transformers
