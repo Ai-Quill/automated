@@ -48,7 +48,7 @@ scripts_data = load_scripts_from_yaml('scripts.yaml')
 
 def main():
     st.sidebar.title("Python Automation Portal")
-    os.environ['DISPLAY'] = ':0'
+    
     
     st.sidebar.markdown("""
     This application allows users to run various Python automation scripts.
@@ -108,7 +108,7 @@ def get_function_code_by_id(script_id):
         14: run_news_reader,
         15: run_qr_code_generator,
         16: run_url_shortener,
-        17: run_screen_recorder,
+        # 17: run_screen_recorder,
         18: run_hydration_reminder,
     }
     function = function_code.get(script_id)
@@ -147,8 +147,8 @@ def run_selected_script(script, inputs):
         run_qr_code_generator(inputs['Link'], inputs['Filename'])
     elif script['id'] == 16:
         run_url_shortener(inputs['Long URL'])
-    elif script['id'] == 17:
-        run_screen_recorder(inputs['Recording duration'])
+    # elif script['id'] == 17:
+    #     run_screen_recorder(inputs['Recording duration'])
     elif script['id'] == 18:
         run_hydration_reminder(inputs['Interval duration in minutes'])
 
@@ -485,23 +485,25 @@ def run_url_shortener(long_url):
     except Exception as e:
         st.error(f"An error occurred: {e}")
 
-def run_screen_recorder(record_seconds):
-    try:
-        SCREEN_SIZE = tuple(pyautogui.size())
-        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-        fps = 12.0
-        out = cv2.VideoWriter("video.mp4", fourcc, fps, SCREEN_SIZE)
+# def run_screen_recorder(record_seconds):
+#     try:
+#         import cv2
+#         os.environ['DISPLAY'] = ':0'
+#         SCREEN_SIZE = tuple(pyautogui.size())
+#         fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+#         fps = 12.0
+#         out = cv2.VideoWriter("video.mp4", fourcc, fps, SCREEN_SIZE)
 
-        for _ in range(int(record_seconds * fps)):
-            img = pyautogui.screenshot()
-            frame = np.array(img)
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            out.write(frame)
+#         for _ in range(int(record_seconds * fps)):
+#             img = pyautogui.screenshot()
+#             frame = np.array(img)
+#             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#             out.write(frame)
 
-        out.release()
-        st.video("video.mp4")
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+#         out.release()
+#         st.video("video.mp4")
+#     except Exception as e:
+#         st.error(f"An error occurred: {e}")
 
 def run_hydration_reminder(interval_minutes):
     try:
