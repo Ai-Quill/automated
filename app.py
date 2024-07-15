@@ -10,7 +10,6 @@ from simple_image_download import simple_image_download as simp
 from faker import Faker
 import random
 import pandas as pd
-import pyautogui
 import qrcode
 from plyer import notification
 from transformers import BartForConditionalGeneration, BartTokenizer
