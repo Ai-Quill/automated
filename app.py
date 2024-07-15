@@ -25,7 +25,7 @@ from email.message import EmailMessage
 import psutil
 import threading
 
-os.environ['DISPLAY'] = ':0'
+
 
 # Load YAML file
 def load_scripts_from_yaml(yaml_file):
@@ -48,6 +48,7 @@ scripts_data = load_scripts_from_yaml('scripts.yaml')
 
 def main():
     st.sidebar.title("Python Automation Portal")
+    os.environ['DISPLAY'] = ':0'
     st.sidebar.markdown("""
     This application allows users to run various Python automation scripts.
     Select a script from the dropdown below to get started.
