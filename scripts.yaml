@@ -1,0 +1,189 @@
+scripts:
+  - id: 1
+    category: Productivity
+    title: AudioBook Converter
+    description: Convert PDF files into audiobooks
+    output: Audiobook in mp3 format
+    inputs:
+      - name: PDF file
+        type: file
+        format: pdf
+
+  - id: 2
+    category: Web Utilities
+    title: Tab Opener
+    description: Open multiple URLs with a single click
+    output: Browser tabs of specified URLs
+    inputs:
+      - name: Links file
+        type: file
+        format: txt
+      - name: Links text
+        type: textarea
+
+  - id: 3
+    category: Web Utilities
+    title: Image Downloader
+    description: Download a set number of images from the web
+    output: Downloaded images
+    inputs:
+      - name: Keyword for images
+        type: text
+      - name: Number of images
+        type: number
+
+  - id: 4
+    category: Code Utilities
+    title: Code Analyzer
+    description: Analyze Python code using Pylint and Flake8
+    output: Code analysis results
+    inputs:
+      - name: Python files
+        type: files
+        format: py
+
+  - id: 5
+    category: Data Utilities
+    title: Fake Data Generator
+    description: Generate realistic-looking fake datasets
+    output: Table of generated fake data
+    inputs:
+      - name: Number of entries
+        type: number
+
+  - id: 6
+    category: Image Utilities
+    title: Background Remover
+    description: Remove backgrounds from images
+    output: Image with background removed displayed
+    inputs:
+      - name: Image file
+        type: file
+        format: jpg, png
+        
+  - id: 7
+    category: Productivity
+    title: Task Reminder
+    description: Set custom reminders for your tasks
+    output: Notification reminder
+    inputs:
+      - name: Reminder text
+        type: text
+      - name: Delay in minutes
+        type: number
+
+  - id: 8
+    category: System Utilities
+    title: Resource Monitor
+    description: Monitor system resources
+    output: Resource usage alerts
+    inputs:
+      - name: CPU threshold
+        type: number
+      - name: Memory threshold
+        type: number
+      - name: GPU threshold
+        type: number
+      - name: Battery threshold
+        type: number
+
+  - id: 9
+    category: Communication
+    title: Bulk Email Sender
+    description: Send bulk emails effortlessly
+    output: Sent emails
+    inputs:
+      - name: Sender email
+        type: text
+      - name: Sender password
+        type: text
+      - name: Emails file
+        type: file
+        format: xlsx
+
+  - id: 10
+    category: Productivity
+    title: Clipboard Manager
+    description: Keep track of everything you copy
+    output: Displays copied items
+    inputs:
+      - name: Placeholder
+        type: text
+        format: 
+
+  - id: 11
+    category: Web Utilities
+    title: Article Summarizer
+    description: Generate summaries of articles
+    output: Summarized article text
+    inputs:
+      - name: Article URL
+        type: text
+
+  - id: 12
+    category: Text Utilities
+    title: Spell Checker
+    description: Detect and correct spelling and grammar mistakes
+    output: Corrected text
+    inputs:
+      - name: Input text
+        type: textarea
+
+  - id: 13
+    category: Web Utilities
+    title: Link Checker
+    description: Check the web connectivity of multiple URLs
+    output: Status of provided URLs
+    inputs:
+      - name: Links file
+        type: file
+        format: txt
+      - name: Links text
+        type: textarea
+
+  - id: 14
+    category: Web Utilities
+    title: News Reader
+    description: Scrape and read trending news headlines out loud
+    output: Read aloud news headlines
+    inputs:
+      - name: News API key
+        type: text
+
+  - id: 15
+    category: Web Utilities
+    title: QR Code Generator
+    description: Create customized QR codes
+    output: Generated QR code image
+    inputs:
+      - name: Link
+        type: text
+      - name: Filename
+        type: text
+
+  - id: 16
+    category: Web Utilities
+    title: URL Shortener
+    description: Convert long URLs into short ones
+    output: Shortened URL
+    inputs:
+      - name: Long URL
+        type: text
+
+  - id: 17
+    category: System Utilities
+    title: Screen Recorder
+    description: Capture screen recordings
+    output: Recording of screen activity
+    inputs:
+      - name: Recording duration
+        type: number
+
+  - id: 18
+    category: Health
+    title: Hydration Reminder
+    description: Stay hydrated with regular water reminders
+    output: Notification reminder to drink water
+    inputs:
+      - name: Interval duration in minutes
+        type: number
