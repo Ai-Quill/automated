@@ -3,3 +3,40 @@
 body * {
     font-family: 'Inter', sans-serif !important;
 }
+h2, h3, h4, h5, h6 {
+    color: #343a40 !important;
+}
+
+button[title="Recommended Legend Items"]::before {
+    display: none;
+}
+
+footer {
+    visibility: hidden;
+}
+
+footer:after {
+    content:'Made with ❤️ using Streamlit';
+    visibility: visible;
+    display: block;
+    position: relative;
+    padding: 5px;
+    top: 2px;
+}
+
+.stApp {
+    padding: 2rem;
+}
+
+.sidebar .sidebar-content {
+    background-color: #f8f9fa;
+    color: #343a40;
+}
+
+.sidebar .sidebar-content .css-1d391kg, .sidebar .sidebar-content h1, .sidebar .sidebar-content h2, .sidebar .sidebar-content h3, .sidebar .sidebar-content h4, .sidebar .sidebar-content h5, .sidebar .sidebar-content h6 {
+    color: #343a40;
+}
+
+.css-1kyxreq textarea {
+    color: #495057;
+}

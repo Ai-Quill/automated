@@ -12,7 +12,6 @@ import random
 import pandas as pd
 import qrcode
 from plyer import notification
-from transformers import BartForConditionalGeneration, BartTokenizer
 import requests
 import pyttsx3
 import pyshorteners
@@ -22,8 +21,7 @@ import lmproof
 import smtplib
 from email.message import EmailMessage
 import psutil
-import threading
-
+import pyperclip
 
 
 # Load YAML file
@@ -46,8 +44,14 @@ def save_uploaded_file(uploadedfile):
 scripts_data = load_scripts_from_yaml('scripts.yaml')
 
 def main():
-    st.sidebar.title("Python Automation Portal")
+    with open("style.css") as css:
+        st.markdown(f'<style>{css.read()}</style>', unsafe_allow_html=True)
+
+    st.title('Python Automated Scripts')
+
+    st.markdown(" ")
     
+    st.sidebar.title("Python Automation Portal")
     
     st.sidebar.markdown("""
     This application allows users to run various Python automation scripts.
@@ -56,6 +60,11 @@ def main():
 
     categories = sorted(set(script['category'] for script in scripts_data['scripts']))
     selected_categories = st.sidebar.multiselect("Filter by Categories", options=categories, default=categories)
+    st.sidebar.markdown("---")
+    st.sidebar.markdown(
+            '<h5>Made with ❤ in &nbsp<img src="https://streamlit.io/images/brand/streamlit-mark-color.png" alt="Streamlit logo" height="16">&nbsp by <a href="https://twitter.com/tuantruong">@tuantruong</a></h5>',
+            unsafe_allow_html=True,
+        )
 
     if not selected_categories:
         selected_scripts = scripts_data['scripts']
@@ -97,7 +106,6 @@ def get_function_code_by_id(script_id):
         4: run_code_analyzer,
         5: run_fake_data_generator,
         6: run_background_remover,
-        7: run_task_reminder,
         8: run_resource_monitor,
         9: run_bulk_email_sender,
         10: run_clipboard_manager,
@@ -107,7 +115,6 @@ def get_function_code_by_id(script_id):
         14: run_news_reader,
         15: run_qr_code_generator,
         16: run_url_shortener,
-        # 17: run_screen_recorder,
         18: run_hydration_reminder,
     }
     function = function_code.get(script_id)
@@ -126,8 +133,6 @@ def run_selected_script(script, inputs):
         run_fake_data_generator(inputs['Number of entries'])
     elif script['id'] == 6:
         run_background_remover(inputs['Image file'])
-    elif script['id'] == 7:
-        run_task_reminder(inputs['Reminder text'], inputs['Delay in minutes'])
     elif script['id'] == 8:
         run_resource_monitor(inputs['CPU threshold'], inputs['Memory threshold'], inputs['GPU threshold'], inputs['Battery threshold'])
     elif script['id'] == 9:
@@ -146,11 +151,8 @@ def run_selected_script(script, inputs):
         run_qr_code_generator(inputs['Link'], inputs['Filename'])
     elif script['id'] == 16:
         run_url_shortener(inputs['Long URL'])
-    # elif script['id'] == 17:
-    #     run_screen_recorder(inputs['Recording duration'])
     elif script['id'] == 18:
         run_hydration_reminder(inputs['Interval duration in minutes'])
-
 # Full source code for all functions
 
 def run_audiobook_converter(pdf_file):
@@ -232,7 +234,6 @@ def run_audiobook_converter(pdf_file):
         st.error(f"An error occurred: {e}")
 
 
-
 def run_tab_opener(inputs):
     links_file = inputs.get('Links file')
     links_text = inputs.get('Links text')
@@ -247,29 +248,73 @@ def run_tab_opener(inputs):
 
     try:
         for link in links:
-            webbrowser.open(link.strip())
+            sanitized_link = link.strip()
+            if sanitized_link:
+                # Using JavaScript to open links in new tabs
+                js = f"window.open('{sanitized_link}', '_blank');"
+                html = f"<script>{js}</script>"
+                components.html(html)
         st.success("Tabs opened successfully!")
     except Exception as e:
         st.error(f"An error occurred: {e}")
+
 
 def run_image_downloader(inputs):
     keyword = inputs['Keyword for images']
     num_images = inputs['Number of images']
     try:
         response = simp.simple_image_download()
-        response.download(keyword, num_images)
+        image_paths = response.download(keyword, num_images)
+        print(image_paths)
         st.success("Images downloaded successfully!")
+        
+        # Displaying images and providing download links
+        if image_paths:
+            downloaded_images = response.downloaded_images
+            for image_path in downloaded_images:
+                st.image(image_path, caption=os.path.basename(image_path))
+                with open(image_path, "rb") as img_file:
+                    st.download_button(label="Download Image", data=img_file, file_name=os.path.basename(image_path), mime="image/jpeg")
     except Exception as e:
         st.error(f"An error occurred: {e}")
 
 def run_code_analyzer(code_files):
     if code_files:
-        for file in code_files:
-            file_path = save_uploaded_file(file)
-            st.write(f"Analyzing file: {file.name}")
-            subprocess.run(f"pylint {file_path}", shell=True)
-            subprocess.run(f"flake8 {file_path}", shell=True)
-        st.success("Code analysis completed!")
+        try:
+            all_pylint_results = []
+            all_flake8_results = []
+
+            for file in code_files:
+                file_path = save_uploaded_file(file)
+                st.write(f"Analyzing file: {file.name}")
+                
+                # Run pylint and capture output
+                pylint_process = subprocess.run(
+                    f"pylint {file_path}",
+                    shell=True,
+                    capture_output=True,
+                    text=True
+                )
+                pylint_result = pylint_process.stdout
+                all_pylint_results.append(f"### Pylint results for {file.name}\n```\n{pylint_result}\n```")
+            
+                # Run flake8 and capture output
+                flake8_process = subprocess.run(
+                    f"flake8 {file_path}",
+                    shell=True,
+                    capture_output=True,
+                    text=True
+                )
+                flake8_result = flake8_process.stdout
+                all_flake8_results.append(f"### Flake8 results for {file.name}\n```\n{flake8_result}\n```")
+
+            st.success("Code analysis completed!")
+
+            # Display all results in markdown
+            st.markdown("\n".join(all_pylint_results) + "\n" + "\n".join(all_flake8_results))
+
+        except Exception as e:
+            st.error(f"An error occurred: {e}")
 
 def run_fake_data_generator(num_entries):
     try:
@@ -296,26 +341,49 @@ def run_fake_data_generator(num_entries):
 
 def run_background_remover(input_img_file):
     input_img_path = save_uploaded_file(input_img_file)
-    output_img_path = input_img_path.replace('.', '_rmbg.')
+    output_img_path = input_img_path.replace('.', '_rmbg.').replace('jpg', 'png').replace('jpeg', 'png')
+
     try:
+        # Open the input image
         inp = Image.open(input_img_path)
+
+        # Remove the background
         output = remove(inp)
-        output.save(output_img_path)
-        st.image(output_img_path, caption="Image with background removed")
+
+        # Save the output image in PNG format to support RGBA
+        output.save(output_img_path, "PNG")
+
+        # Display the images side by side
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.header("Before")
+            st.image(input_img_path, caption="Original Image")
+            with open(input_img_path, "rb") as img_file:
+                st.download_button(label="Download Original Image", data=img_file, file_name=os.path.basename(input_img_path), mime="image/jpeg")
+
+        with col2:
+            st.header("After")
+            st.image(output_img_path, caption="Image with Background Removed")
+            with open(output_img_path, "rb") as img_file:
+                st.download_button(label="Download Processed Image", data=img_file, file_name=os.path.basename(output_img_path), mime="image/png")
+
         st.success("Background removed successfully!")
+
     except Exception as e:
         st.error(f"An error occurred: {e}")
 
-def run_task_reminder(reminder, delay_minutes):
-    try:
-        st.write("Setting up reminder...")
-        time.sleep(2)
-        st.write("All set!")
-        time.sleep(delay_minutes * 60)
-        st.info(reminder)
-        st.success("Reminder sent!")
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+
+# def run_task_reminder(reminder, delay_minutes):
+#     try:
+#         st.write("Setting up reminder...")
+#         time.sleep(2)
+#         st.write("All set!")
+#         time.sleep(delay_minutes * 60)
+#         st.info(reminder)
+#         st.success("Reminder sent!")
+#     except Exception as e:
+#         st.error(f"An error occurred: {e}")
 
 def run_resource_monitor(cpu_threshold, memory_threshold, gpu_threshold, battery_threshold):
     while True:
@@ -364,12 +432,38 @@ def run_bulk_email_sender(sender_email, sender_password, emails_file):
     except Exception as e:
         st.error(f"An error occurred: {e}")
 
+import pyperclip
+import time
+
 def run_clipboard_manager():
-    st.write("Clipboard Manager not supported in Streamlit interface. Use tkinter window instead.")
-    # Further implementation can be the same as before but note it won't work in Streamlit
+    st.title("Clipboard Manager")
+    
+    # Placeholder for clipboard content list
+    if 'clipboard_contents' not in st.session_state:
+        st.session_state.clipboard_contents = []
+
+    def update_clipboard():
+        new_item = pyperclip.paste()
+        if new_item and new_item not in st.session_state.clipboard_contents:
+            st.session_state.clipboard_contents.append(new_item)
+        st.experimental_rerun()
+
+    # Display the clipboard contents
+    st.write("### Clipboard Contents")
+    if st.session_state.clipboard_contents:
+        for i, item in enumerate(st.session_state.clipboard_contents):
+            st.write(f"- {item}")
+
+    # Update clipboard every 5 seconds
+    st.button("Refresh Clipboard", on_click=update_clipboard)
+    
+    time.sleep(5)  # Wait for 5 seconds
+    update_clipboard()
+
 
 def run_article_summarizer(url):
     try:
+        from bs4 import BeautifulSoup
         def scrape_webpage(url):
             headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
             response = requests.get(url, headers=headers)

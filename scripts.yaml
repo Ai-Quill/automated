@@ -187,3 +187,15 @@ scripts:
     inputs:
       - name: Interval duration in minutes
         type: number
+        
+  - id: 19
+    category: Media
+    title: YouTube Downloader
+    description: Download YouTube videos in both audio and video formats
+    output: Downloaded video or audio file
+    inputs:
+      - name: YouTube URL
+        type: text
+      - name: Format
+        type: text
+        options: ["Audio", "Video"]
