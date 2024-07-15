@@ -1,7 +1,7 @@
 streamlit
 pyttsx3
 pypdf2
-numpy
+numpy<2
 pandas
 pyshorteners
 requests
