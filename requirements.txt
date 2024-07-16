@@ -18,3 +18,4 @@ pyautogui
 plyer
 google_images_download
 yt_dlp
+wheel
