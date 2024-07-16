@@ -44,17 +44,21 @@ def save_uploaded_file(uploadedfile):
 scripts_data = load_scripts_from_yaml('scripts.yaml')
 
 def main():
+    if 'selected_script_title' not in st.session_state:
+        st.session_state.selected_script_title = ''
+
     with open("style.css") as css:
         st.markdown(f'<style>{css.read()}</style>', unsafe_allow_html=True)
 
     st.title('Python Automated Scripts')
 
     st.markdown(" ")
-    
+
     st.sidebar.title("Python Automation Portal")
-    
+
     st.sidebar.markdown("""
-    This application allows users to run various Python automation scripts. Simple and straightforward. 
+    This application allows users to run various Python automation scripts.
+    Select a script from the dropdown below to get started.
     """)
 
     categories = sorted(set(script['category'] for script in scripts_data['scripts']))
@@ -71,12 +75,19 @@ def main():
         selected_scripts = [script for script in scripts_data['scripts'] if script['category'] in selected_categories]
 
     script_titles = [script['title'] for script in selected_scripts]
-    selected_script_title = st.selectbox("Choose an Automation Script", script_titles)
+
+    selected_script_title = st.selectbox(
+        "Choose an Automation Script", 
+        script_titles, 
+        index=script_titles.index(st.session_state.selected_script_title) if st.session_state.selected_script_title in script_titles else 0
+    )
+    st.session_state.selected_script_title = selected_script_title
+
     selected_script = next(script for script in selected_scripts if script['title'] == selected_script_title)
 
     st.markdown(f"### {selected_script['title']}")
     st.write(selected_script['description'])
-    
+
     inputs = {}
     for input_item in selected_script['inputs']:
         if input_item['type'] == 'file':
@@ -95,7 +106,7 @@ def main():
 
     if st.button("Run Script"):
         run_selected_script(selected_script, inputs)
-        
+
     with st.expander("Function Code"):
         function_code = get_function_code_by_id(selected_script['id'])
         st.code(function_code, language='python')
@@ -335,7 +346,7 @@ def run_audiobook_converter(pdf_file):
         # Generate a unique filename
         timestamp = int(time.time())
         original_filename = os.path.splitext(os.path.basename(file_path))[0]
-        audio_filename = os.path.join(temp_dir, f'{original_filename}_{timestamp}.mp3')
+        audio_filename = os.path.join(temp_dir, f'{original_filename}_{timestamp}.wav')
         
         # Initialize TTS engine
         engine = pyttsx3.init()  # object creation
@@ -357,7 +368,7 @@ def run_audiobook_converter(pdf_file):
 
         st.success("Audiobook created successfully!")
         with open(audio_filename, "rb") as file:
-            st.download_button(label="Download Audiobook", data=file, file_name=f'{original_filename}_{timestamp}.mp3', mime="audio/mpeg")
+            st.download_button(label="Download Audiobook", data=file, file_name=f'{original_filename}_{timestamp}.wav', mime="audio/mpeg")
     except Exception as e:
         st.error(f"An error occurred: {e}")
 
