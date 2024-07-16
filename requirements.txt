@@ -17,3 +17,4 @@ beautifulsoup4
 pyautogui
 plyer
 google_images_download
+yt_dlp
