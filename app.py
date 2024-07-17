@@ -23,6 +23,8 @@ from email.message import EmailMessage
 import psutil
 import pyperclip
 import yt_dlp
+from PIL import Image, ImageOps, ImageEnhance, ImageFilter, ImageDraw, ImageFont
+
 
 # Load YAML file
 def load_scripts_from_yaml(yaml_file):
@@ -42,6 +44,67 @@ def save_uploaded_file(uploadedfile):
 
 # Load scripts data from yaml file
 scripts_data = load_scripts_from_yaml('scripts.yaml')
+
+
+# Handling different input types, including select and slider
+def handle_inputs(selected_script):
+    inputs = {}
+    operation = None
+
+    # Handle initial inputs
+    for input_item in selected_script['inputs']:
+        key = input_item['name']
+        if input_item['type'] == 'file':
+            inputs[input_item['name']] = st.file_uploader(f"Upload {input_item['name']}", type=input_item['format'].split(', '), key=key)
+        elif input_item['type'] == 'files':
+            inputs[input_item['name']] = st.file_uploader(f"Upload {input_item['name']}", type=input_item['format'].split(', '), accept_multiple_files=True, key=key)
+        elif input_item['type'] == 'text' and 'options' in input_item:
+            inputs[input_item['name']] = st.selectbox(f"Select {input_item['name']}", input_item['options'], key=key)
+        elif input_item['type'] == 'text':
+            inputs[input_item['name']] = st.text_input(f"Enter {input_item['name']}", key=key)
+        elif input_item['type'] == 'number':
+            inputs[input_item['name']] = st.number_input(f"Enter {input_item['name']}", min_value=1, step=1, key=key)
+        elif input_item['type'] == 'textarea':
+            inputs[input_item['name']] = st.text_area(f"Input {input_item['name']} (one per line)", key=key)
+        elif input_item['type'] == 'select':
+            inputs[input_item['name']] = st.selectbox(f"Choose {input_item['name']}", options=input_item['options'], key=key)
+            if input_item['name'] == 'Operation':
+                operation = inputs[input_item['name']]
+        elif input_item['type'] == 'slider':
+            inputs[input_item['name']] = st.slider(f"Adjust {input_item['name']}", min_value=float(input_item.get('min', 0)), max_value=float(input_item.get('max', 3)), value=float(input_item.get('value', 1)), step=float(input_item.get('step', 0.1)), key=key)
+        
+    # Conditionally render inputs based on Operation
+    if operation:
+        st.write(f"Selected Operation: {operation}")
+        dependent_inputs = {
+            "Convert Format": ["Format"],
+            "Combine Images": ["Second Image"],
+            "Resize": ["New Width", "New Height"],
+            "Flip": ["Direction"],
+            "Blur": ["Blur Radius"],
+            "Add Shadow": [],
+            "Crop": ["Left", "Upper", "Right", "Lower"],
+            "Adjust Brightness": ["Brightness"],
+            "Add Watermark": ["Watermark Text"],
+            "Rotate": ["Angle"],
+        }
+        for dependent_input in dependent_inputs.get(operation, []):
+            for input_item in selected_script['inputs']:
+                if input_item['name'] == dependent_input:
+                    key = f"{operation}_{dependent_input}"
+                    if input_item['type'] == 'file':
+                        inputs[dependent_input] = st.file_uploader(f"Upload {dependent_input}", type=input_item['format'].split(', '), key=key)
+                    elif input_item['type'] == 'text':
+                        inputs[dependent_input] = st.text_input(f"Enter {dependent_input}", key=key)
+                    elif input_item['type'] == 'number':
+                        inputs[dependent_input] = st.number_input(f"Enter {dependent_input}", min_value=1, step=1, key=key)
+                    elif input_item['type'] == 'select':
+                        inputs[dependent_input] = st.selectbox(f"Choose {dependent_input}", options=input_item['options'], key=key)
+                    elif input_item['type'] == 'slider':
+                        inputs[dependent_input] = st.slider(f"Adjust {dependent_input}", min_value=float(input_item.get('min', 0.0)), max_value=float(input_item.get('max', 3.0)), value=float(input_item.get('value', 1.0)), step=float(input_item.get('step', 0.1)), key=key)
+
+    return inputs
+
 
 def main():
     if 'selected_script_title' not in st.session_state:
@@ -88,21 +151,7 @@ def main():
     st.markdown(f"### {selected_script['title']}")
     st.write(selected_script['description'])
 
-    inputs = {}
-    for input_item in selected_script['inputs']:
-        if input_item['type'] == 'file':
-            inputs[input_item['name']] = st.file_uploader(f"Upload {input_item['name']}", type=input_item['format'].split(', '))
-        elif input_item['type'] == 'files':
-            inputs[input_item['name']] = st.file_uploader(f"Upload {input_item['name']}", type=input_item['format'].split(', '), accept_multiple_files=True)
-        elif input_item['type'] == 'text':
-            if 'options' in input_item:
-                inputs[input_item['name']] = st.selectbox(f"Select {input_item['name']}", input_item['options'])
-            else:
-                inputs[input_item['name']] = st.text_input(f"Enter {input_item['name']}")
-        elif input_item['type'] == 'number':
-            inputs[input_item['name']] = st.number_input(f"Enter {input_item['name']}", min_value=1, step=1)
-        elif input_item['type'] == 'textarea':
-            inputs[input_item['name']] = st.text_area(f"Input {input_item['name']} (one per line)")
+    inputs = handle_inputs(selected_script)
 
     if st.button("Run Script"):
         run_selected_script(selected_script, inputs)
@@ -110,6 +159,7 @@ def main():
     with st.expander("Function Code"):
         function_code = get_function_code_by_id(selected_script['id'])
         st.code(function_code, language='python')
+
 
 def get_function_code_by_id(script_id):
     function_code = {
@@ -128,6 +178,7 @@ def get_function_code_by_id(script_id):
         13: run_link_checker,
         14: run_news_reader,
         15: run_article_summarizer,
+        16: run_image_editor,
     }
     function = function_code.get(script_id)
     return inspect.getsource(function) if function else "Function not implemented."
@@ -163,6 +214,8 @@ def run_selected_script(script, inputs):
         run_news_reader(inputs['News API key'])
     elif script['id'] == 15:
         run_article_summarizer(inputs['Article URL'])
+    elif script['id'] == 16:
+        run_image_editor(inputs)
 
 def run_background_remover(input_img_file):
     input_img_path = save_uploaded_file(input_img_file)
@@ -557,6 +610,122 @@ def run_news_reader(api_key):
         trndnews()
     except Exception as e:
         st.error(f"An error occurred: {e}")
+        
+def run_image_editor(inputs):
+    input_img_file = inputs['Image file']
+    operation = inputs['Operation']  # This will handle the operation selection
+
+    input_img_path = save_uploaded_file(input_img_file)
+    try:
+        # Open the input image
+        img = Image.open(input_img_path)
+        st.image(img, caption="Original Image")
+        st.write("Processing...")
+
+        output_img = None
+        output_img_path = None
+
+        # Process the selected option
+        if operation == "Convert Format":
+            format = inputs['Format']
+            output_img_path = os.path.join("tempDir", f"converted_image.{format}")
+            img.save(output_img_path, format=format.upper())
+
+        elif operation == "Combine Images":
+            second_img_file = inputs['Second Image']
+            if second_img_file:
+                second_img_path = save_uploaded_file(second_img_file)
+                img2 = Image.open(second_img_path)
+                combined_img = Image.new('RGB', (img.width + img2.width, max(img.height, img2.height)))
+                combined_img.paste(img, (0, 0))
+                combined_img.paste(img2, (img.width, 0))
+                output_img = combined_img
+                output_img_path = os.path.join("tempDir", "combined_image.png")
+                combined_img.save(output_img_path)
+
+        elif operation == "Resize":
+            new_width = inputs['New Width']
+            new_height = inputs['New Height']
+            resized_img = img.resize((new_width, new_height))
+            output_img = resized_img
+            output_img_path = os.path.join("tempDir", "resized_image.png")
+            resized_img.save(output_img_path)
+
+        elif operation == "Flip":
+            direction = inputs['Direction']
+            flipped_img = img.transpose(Image.FLIP_LEFT_RIGHT) if direction == "Horizontal" else img.transpose(Image.FLIP_TOP_BOTTOM)
+            output_img = flipped_img
+            output_img_path = os.path.join("tempDir", "flipped_image.png")
+            flipped_img.save(output_img_path)
+
+        elif operation == "Blur":
+            blur_radius = inputs['Blur Radius']
+            blurred_img = img.filter(ImageFilter.GaussianBlur(blur_radius))
+            output_img = blurred_img
+            output_img_path = os.path.join("tempDir", "blurred_image.png")
+            blurred_img.save(output_img_path)
+
+        elif operation == "Add Shadow":
+            shadow_img = ImageOps.expand(img, border=20, fill="black")
+            output_img = shadow_img
+            output_img_path = os.path.join("tempDir", "shadow_image.png")
+            shadow_img.save(output_img_path)
+
+        elif operation == "Crop":
+            left = inputs['Left']
+            upper = inputs['Upper']
+            right = inputs['Right']
+            lower = inputs['Lower']
+            cropped_img = img.crop((left, upper, right, lower))
+            output_img = cropped_img
+            output_img_path = os.path.join("tempDir", "cropped_image.png")
+            cropped_img.save(output_img_path)
+
+        elif operation == "Adjust Brightness":
+            brightness_factor = inputs['Brightness']
+            enhancer = ImageEnhance.Brightness(img)
+            bright_img = enhancer.enhance(brightness_factor)
+            output_img = bright_img
+            output_img_path = os.path.join("tempDir", "brightness_adjusted_image.png")
+            bright_img.save(output_img_path)
+
+        elif operation == "Add Watermark":
+            watermark_text = inputs['Watermark Text']
+            draw = ImageDraw.Draw(img)
+            font = ImageFont.load_default()
+            textwidth, textheight = draw.textsize(watermark_text, font)
+            width, height = img.size
+            x = (width - textwidth) - 10
+            y = (height - textheight) - 10
+            draw.text((x, y), watermark_text, font=font)
+            output_img = img
+            output_img_path = os.path.join("tempDir", "watermarked_image.png")
+            img.save(output_img_path)
+
+        elif operation == "Rotate":
+            angle = inputs['Angle']
+            rotated_img = img.rotate(angle, expand=True)
+            output_img = rotated_img
+            output_img_path = os.path.join("tempDir", "rotated_image.png")
+            rotated_img.save(output_img_path)
+
+        # Display before and after images side by side
+        if output_img_path:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.header("Before")
+                st.image(img, caption="Original Image")
+            with col2:
+                st.header("After")
+                st.image(output_img_path, caption=f"Image with {operation}")
+
+            mime_type = "image/png" if operation in ["Add Shadow", "Combined Images"] else f"image/{format}"
+            with open(output_img_path, "rb") as file:
+                st.download_button(label=f"Download {operation} Image", data=file, file_name=os.path.basename(output_img_path), mime=mime_type)
+
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
+
 
 if __name__ == '__main__':
     main()
