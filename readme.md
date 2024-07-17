@@ -1,6 +1,12 @@
 # AutoPilot
 
 AutoPilot is your go-to Python-based automation portal, letting you effortlessly run various scripts from an intuitive web interface built with Streamlit.
+Demo video
+
+https://github.com/user-attachments/assets/fd0b2510-921d-48e8-92b7-99565e87b66c
+
+
+
 
 ## Key Features
 
